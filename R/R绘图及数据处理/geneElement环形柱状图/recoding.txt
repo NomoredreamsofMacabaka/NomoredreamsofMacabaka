@@ -1,0 +1,14 @@
+###记录基因功能原件的各个步骤
+
+##一、统计peak的summits在每个染色体每10万个碱基中的个数，绘制环形柱状图
+首先根据参考基因组的len文件对染色体区间进行分割，每十万个碱基称为一个区间:
+运行Len_to_bed.py得到tmp1,在通过intersectBed软件根据tmp1和peak的summits文件取共有peak重叠区域.得到tmp2
+运行Count_summits.py计算tmp2,计数
+运行summits_in_chr_counts.r脚本得图,这个脚本没有用到计数得到的结果文件，该脚本有问题，具体见脚本里面代码说明
+
+
+使用intersectBed对peak的summits与基因组的genElement.bed取公有区间
+
+
+
+

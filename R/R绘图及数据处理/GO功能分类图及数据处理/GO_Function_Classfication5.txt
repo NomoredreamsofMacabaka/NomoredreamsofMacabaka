@@ -1,0 +1,66 @@
+#首先读取wego.list表格，将GO号为键，gene为值建立键值对，但是gene这个值要转为字符串添加到值中，也就是说值是只有一个字符串，但包含了多个基因的情况。
+#这个步骤用到了字符串拼接操作的F-string
+#第二步读取level文件，给一个list4记录最后结果表格所需要的第一列(GO大类号)，创建一个字典2记录GO大类对应的功能信息。
+#遍历level文件，如果level文件中的第一列存在于字典1中的key那么就把字典1中level文件中GO子类的值添加到GO大类中。这时候字典1的key所带的值是geneid，但有重复。
+#遍历list4,进行格式化输出。
+
+import os
+import sys
+GO_level = '/data/project/hejie/my_script/datebase/GO/GO_GOlevel2.xls'
+wego     = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/wego.list'
+output   = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/wego_count.txt'
+
+with open(wego,'r') as S1:
+	list2=[]  #记录非重复的GO号
+	dic1 ={}   #记录GO号-gene键值对
+	for line in  S1:
+		line = line.strip('\n')  #删除行末尾的换行符
+		list1= line.split(sep='\t')
+		del(list1[0])
+		gene_name= line.split(sep='\t')[0]
+		for i in list1:
+			if i not in list2:
+				list2.append(i)
+				dic1[i]=gene_name
+			else:
+				#dic1[i].append(gene_name)
+				dic1[i]=f'{dic1[i]},{gene_name}'  ##python3中的F-string拼接字符串
+
+
+#打印第一个字典
+# for key,value in dic1.items():
+# 	print ("\nkey:"+key)
+# 	print (value)
+
+
+with open(GO_level,'r') as S2:
+	dic2={}
+	list4=[]   #记录大类GO号
+	for line2 in S2:
+		list3 = line2.strip('\n').split('\t')
+		if list3[0] in dic1.keys():
+			dic1[list3[1]]=f'{dic1[list3[1]]},{dic1[list3[0]]}'
+			if list3[1] not in list4:
+				list4.append(list3[1])
+				dic2[list3[1]]=[list3[2],list3[3]]
+		elif list3[1] in dic1.keys():
+			if list3[1] not in list4:
+				list4.append(list3[1])
+				dic2[list3[1]]=[list3[2],list3[3]]
+##打印第一个字典
+# for key,value in dic1.items():
+# 	print ("\nkey:"+key)
+# 	print (value)
+
+##打印list4中的GO大类号
+#print(list4)
+
+with open(output,'w') as S3:
+	print ("GO_ID\tGO_term\tGO_description\tgene_num\tgene",file=S3)
+	for key in list4:
+		list5=list(set(dic1[key].split(',')))     #记录键对应的值(由于是字符串，把他转成列表在转成集合去重，在转成列表，在转成字符串，
+										#由于字符串直接转成集合会变成单个字符一组所以要转成列表)
+		gene_num=len(list5)
+		str1 =",".join(list5)
+		print (key,dic2[key][0],dic2[key][1],gene_num,str1,sep='\t',file=S3)
+

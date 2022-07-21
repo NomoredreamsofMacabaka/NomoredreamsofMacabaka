@@ -1,0 +1,80 @@
+#首先读取wego.list表格，形成GO-gene键值对，字典1
+#遍历GO的level文件，判断字典1中的GO键是否存在，如果存在，那么返回level中的GO大类为键，后面两列添加为值，增加字典1中的gene为值,作为字典2
+#问题是有没有方法可以直接把字典1中的值更新到对应字典2中的键对应的值中?
+#字典1中gene是有重复ID的，后面需要去除重复
+#输出是遍历字典2，然后给个list4记录非重复geneid打印到output
+
+import os
+import sys
+GO_level = '/data/project/hejie/my_script/datebase/GO/GO_GOlevel2.xls'
+wego     = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/wego.list'
+output   = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/wego_count.txt'
+
+with open(wego,'r') as S1:
+	list2=[]  #记录非重复的GO号
+	dic1 ={}   #记录GO号-gene键值对
+	for line in  S1:
+		line = line.strip('\n')  #删除行末尾的换行符
+		list1= line.split(sep='\t')
+		del(list1[0])
+		gene_name= line.split(sep='\t')[0]
+		for i in list1:
+			if i not in list2:
+				list2.append(i)
+				dic1[i]=[gene_name]
+			else:
+				dic1[i].append(gene_name)
+##打印第一个字典
+# for key,value in dic1.items():
+# 	print ("\nkey:"+key)
+# 	print (value)
+with open(GO_level,'r') as S2:
+	dic2={}
+	list4=[] ###记录大类的功能
+	for line2 in S2:
+		line2 = line2.strip('\n')
+		list3 = line2.split(sep='\t')
+		if list3[0] in dic1.keys():
+			if list3[3] not in list4:
+				list4.append(list3[3])
+				dic2[list3[1]]=[list3[2],list3[3]]
+				for value in dic1[list3[0]]:
+					dic2[list3[1]].append(value)
+			else:
+				for value in dic1[list3[0]]:
+					dic2[list3[1]].append(value)
+		elif list3[1] in dic1.keys():
+			if list3[3] not in list4:
+				list4.append(list3[3])
+				dic2[list3[1]]=[list3[2],list3[3]]
+				for value in dic1[list3[1]]:
+					dic2[list3[1]].append(value)
+			else:
+				for value in dic1[list3[1]]:
+					dic2[list3[1]].append(value)
+
+##打印字典2
+# for key,value in dic2.items():
+# 	print ("\nkey:"+key)
+# 	print (value)
+
+with open(output,'w') as S3:
+	print ("GO_ID\tGO_term\tGO_description\tgene_num\tgene",file=S3)
+	for key,value in dic2.items():
+		list4=[key]
+		for i  in value:
+			if i not in list4:
+				list4.append(i)
+		list4.insert(3,(len(list4)-3))
+		k=0
+		while k <= (len(list4)-1):
+			if k==0 or k==1 or k==2 or k==3:
+				print (list4[k],end='\t',file=S3)
+			elif k!= (len(list4)-1):
+				print (list4[k],end=',',file=S3)
+			elif k == (len(list4)-1):
+				print (list4[k],end='\n',file=S3)
+			k=k+1
+
+
+

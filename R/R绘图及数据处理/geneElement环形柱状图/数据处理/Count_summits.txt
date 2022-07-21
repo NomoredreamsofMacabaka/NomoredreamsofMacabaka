@@ -1,0 +1,24 @@
+###统计在基因组的染色体区间中每十万个base中summits的个数
+
+import os
+tmp2='/nfs2/worktmp/chenzh_test/chip_seq_process/python_process/gene_Element/tmp2'
+
+with open(tmp2,'r') as S1:
+	dic  ={}
+	list1=[]   #记录不同的start位置列表
+	num  =1
+	for line in S1:
+		list2 = line.split('\t')
+		if list2[3] not in list1:
+			list1.append(list2[3])
+			num=1
+			dic[list2[3]]=list2[0],list2[1],list2[2],str(num)
+		else:
+			num+=1
+			dic[list2[3]]=list2[0],list2[1],list2[2],str(num)
+for i in list1:
+	list3=list(dic[i])
+	print (list3[0],list3[1],list3[2],list3[3],sep='\t')
+
+
+		

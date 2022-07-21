@@ -1,0 +1,31 @@
+rm(list=ls())
+library(ggplot2)
+library(dplyr)
+kegg_stat <- read.table('C:/Users/Administrator/Desktop/kegg_classification.stat.xls',sep='\t',head=T)
+A_faction <- levels(factor(kegg_stat$firstType))
+
+#col <- rainbow(length(A_faction))
+
+plot_input=data.frame(firstType=character(),secondType=character(),count=integer(),gene=character())
+for (i in A_faction){
+  tmp <- tibble(kegg_stat %>% dplyr::filter(firstType==i))
+  faction <- head(tmp[order(-tmp$count),],n=5)
+  plot_input <- merge(plot_input,faction,all=T,sort=F)   ###merge默认sort按列排序,这里改为F
+}
+
+plot_input$secondType <- factor(plot_input$secondType,levels=plot_input$secondType)
+
+ggplot(plot_input,aes(x=secondType,y=count,fill=firstType))+
+         geom_bar(stat='identity',width=0.75)+
+         #scale_x_discrete(labels=plot_input$secondType)+     ###重新定义X轴的名字
+         labs(x='KEGG_faction',y='Gene Number')+ 
+         theme(axis.text.x=element_text(size=8,vjust=1,hjust=1),  #设置x轴文本
+               axis.ticks.x=element_blank())+
+               #legend.title = element_text())+   ###删除图例的标题
+         guides(fill=guide_legend(title='test'))+   ###更改图例标题
+  coord_flip()   ##翻转坐标轴
+
+###画图时能不能通过group指定来让坐标轴顺序随我们的levels来排序,或者说坐标轴在画图时,不改变我所
+###给数据框的顺序
+##ggplot会对character进行自动排序,一般处理方式是在外面排好,转为因子后,画图直接调用因子变量,就是按
+##自己所想顺序作图

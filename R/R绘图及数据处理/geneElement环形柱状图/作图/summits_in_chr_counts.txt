@@ -1,0 +1,55 @@
+library(circlize)
+gene_len1 <- read.table('C:/Users/Administrator/Desktop/Yarrowia_lipolytica.fa.len3')
+
+gene_len <- gene_len1[order(gene_len1[,1],decreasing = F),]
+
+#test <- read.table('C:/Users/Administrator/Desktop/summits_inchromesome_count')
+
+tmp2 <- read.table('C:/Users/Administrator/Desktop/tmp2')
+
+x <- matrix(c(gene_len$V2,gene_len$V3),ncol=2,nrow = 7) 
+circos.par(cell.padding =c(0.02, 0, 0.02, 0))  ###改变cell(扇形与轨道之前的区域)
+circos.par("track.height"=0.1)  #改变轨道弧长默认值，0.1代表扇形弧长的十分之一
+circos.initialize(sectors = gene_len$V1,xlim=x)
+#xlim要输入向量,是一个范围值，所以要两个值,而且行数要与factor数目对应
+
+###给轨道1和轨道2的cell填充颜色,由于读表顺序问题以及有的轨道2无值,
+###col2就取和轨道1颜色的公共部分
+col <- rainbow(length(gene_len$V1))
+col2_ready <- data.frame(A=gene_len$V1,B=col)
+col2 <- col2_ready[col2_ready$A %in% unique(tmp2$V1),]$B
+
+circos.track(factors=gene_len$V1,ylim=c(0,1),
+             bg.col=col,bg.border=NA,  ##赋颜色,删轨道边框(默认值为black)
+             panel.fun=function(x,y){       #panel.fun在每个单元格中添加图形的面板功能
+               circos.text(x=get.cell.meta.data('xcenter'),    ##circos.text处理cell中的文本
+                           ###我的理解是这个center是取x轴中点
+                           y=get.cell.meta.data('ylim')[2]+uy(7.3,'mm'),
+                           ###get.cell.meta.data("ylim")[2]表示取y轴最大值为y
+                           ###uy()中'mm'代表单位,还有cm和inches
+                           labels=get.cell.meta.data('sector.index'), ###获取扇形标签
+                           cex=1.2)   ##cex改变字体大小参数
+               circos.axis(labels.cex = 0.7)  ## circos.axis处理x轴刻度函数
+             })
+circos.par("track.height"=0.4)
+circos.trackHist(factors=tmp2$V1 , x=tmp2$V3 , col=col2 ,bin.size = 100000 , right=T)
+！！！这里作图有问题，由于circos.trackHist这个函数源码调用的范围min(nx)和max(nx)中是按照我给的tmp2$V3给的，这样是有问题的。
+###虽然去start和end的中间值添加一列x_mid，再把函数源码中的min(nx)改为0暂时没有发现问题，但是最好还是在外面计数了再去
+###画第二轨道的柱状图。
+###后来又想了一下看了源码如果改为0没啥问题，但是要改封装包中的函数比较麻烦，所以就给tmp2文件每个染色体都添加
+###一行start为0，end也为0的行，由于circos.trackHist中有个right参数默认为T，意思是区间判定右闭，左开。我取mid值就没问题
+
+legend("center","test",col=par("col"),bty="n",border = NA,cex=3)
+##给个标题
+
+circos.clear()
+"""
+#如果不用初始化模板,每个扇形对应的xlim不能差距过大,如果差距过大就会报错:
+#Error: Summation of cell padding on x-direction are larger than the width
+#for some sectors. You can e.g. set 'circos.par(cell.padding =
+#c(0.02, 0, 0.02, 0))' or remove tiny sectors.
+#然后我改了cell.padding值就可以了
+
+
+circos.initializeWithIdeogram(gene_len,plotType = c("ideogram ","axis", "labels"))
+##模板的好处在于专门处理生物学数据,直接把x轴单位换算成kb,而且不用设置很多初始化的东西

@@ -1,0 +1,53 @@
+ #本脚本用于PeakAnnotator前置文件排序,二次排序操作
+#依据peak_bed文件的染色体列的ID来抽取参考基因组的bed文件中的包含peak染色体ID的行，不包含的就舍弃。
+#算法思路:首先将peak的bed文件中染色体ID列sort取uniq进元组（叫S1），在对参考基因组的bed按照第一列排序（S2）。
+#S2中的第一列包含了S1的元素即将该行输入到一个元组中(S3).然后根据sorted函数进行二次排序，想法是S1对到S2。
+
+
+###改进方式:读取参考基因组的第一列，不用sort peak.bed文件判断参考基因组的第一列是否在peak.bed中的第一列中即可,而且可以对peak_bed的染色体列取独一。
+###
+###/usr/bin/python3
+import os
+import sys
+#peak_bed = '/nfs2/worktmp/chenzh_test/chip_seq_process/Peak/IP_Fts1_2_vs_In_Fts1_2_peaks.xls.bed'
+#gene_bed = '/public/database/annotation/Yarrowia_lipolytica/Yarrowia_lipolytica.gene.bed'
+#output = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/test'
+peak_bed = sys.argv[1]
+gene_bed = sys.argv[2]
+path     = os.getcwd()
+file_defalut = path + "/test"
+if len(sys.argv)-1 == 3 :      ###判断给参是否为3个，-1是因为.py也算一个长度，sys.argv[0]代表的是.py
+	output   = sys.argv[3]    
+else:
+	output   = file_defalut
+
+
+def read_peak_bed():
+	with open(peak_bed,'r') as S1:
+		list1=[]
+		for line1 in S1:
+			chr1=line1.split(sep="\t")[0]
+			list1.append(chr1)
+	return  (list(set(list1)))     ####输出独一的chr的id
+
+def main():
+	with open(gene_bed) as S2:
+		list3=[]     ###
+		list2=read_peak_bed()
+		for line2 in S2:
+			chr2=line2.split(sep="\t")[0]
+			if chr2 in list2:
+				list3.append(line2)
+				#with open(output,'a') as f:
+				#	print (line2,end='',file=f) 注意python中print会自带换行符，输出时，记得更改end，要不然可能会多出很多空行
+		list4 = sorted(list3,key=lambda x:(x[0],x[1],x[2]))   ###对第一列，第二列，第三列进行主次排序
+		if output :
+			with open(output,'w') as f:
+				for z in list4:
+					print (z,end='',file=f)
+		else:
+			with open(output,'a') as f:
+				for z in list4:
+					print (z,end='',file=f)
+
+main()

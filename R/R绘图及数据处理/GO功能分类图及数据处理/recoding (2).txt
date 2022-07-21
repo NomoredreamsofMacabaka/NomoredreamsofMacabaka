@@ -1,0 +1,30 @@
+###该文本是对得到关联基因以及对关联基因做注释的一些描述
+首先取得关联基因是使用PeakAnnotator软件。该软件需要输入的基因组的bed文件，而且输入的bed文件要根据得到的peak的bed文件进行排序处理才能使用
+否则就会报错，例如：
+nohup  /opt/software/PeakAnnotator_Cpp_1.4/PeakAnnotator_Linux64/PeakAnnotator   TSS   /nfs2/igenebook/Yarrowia_lipolytica_AJCHS2201026037_ChIP_20210202/ChIP/04.MACS/IP_Fts1_1_vs_In_Fts1_1_peaks.xls.bed    /public/database/annotation/Yarrowia_lipolytica/Yarrowia_lipolytica.gene.bed   test.nearestGene  &
+错误提示：Files must be sorted by chromosomes,start position, end position
+所以需要使用脚本对基因组的bed文件进行排序。
+
+排序的脚本是按照chr，start，end进行二次排序
+脚本为PeakAnnotator_sort.py运行结果输出为test，后使用PeakAnnotator软件取出离TSS位点最近的gene，结果文件为test_nearestgene
+该文件的distance列怎么得来的：
+首先判断strand是正还是负，这里的正负是对gene是从哪个位子开始转录的，远离TSS在末端即为-使用end作为计算点，在TSS端即为+使用start作为计算点，然后判断peak在计算点的上游还是下游，如果是上游那么distance就为-号，如果是下游distance就是+号
+distance的大小是根据计算点跟peak的start和end的中点的距离。
+Chromosome	PeakStart	PeakEnd	Distance	GeneStart	GeneEnd	ClosestTSS_ID	Symbol	Strand
+chrNC_006067.1	83474	83807	-171	83812	86167	YALI0_A00682g		+
+chrNC_006067.1	132902	134295	-3340	136939	140176	YALI0_A01023g		+
+
+
+###对peak区间进行注释，暂时没做
+
+###对得到的关联基因进行注释：
+首先以test_nearestgene(peak的关联基因)文件得到genelist，然后根据参考基因组的wego结果提取关联基因对应的GO号。结果为wego.list
+目标是做GO功能注释分类图，该图是按照基因对到参考基因组的wego文件的GO号，对其进行层级分类统计计数，然后再对统计的结果wego.count画图
+这个作图由于图形展示的情况，我们只需要显示出大类的GO功能。注释到小类的GO功能的gene也算到他们对应的祖先类中，这样就可以做一个列表
+第一列		第二列		第三列		第四列		第五列
+GO大类GO号 	一级功能	二级功能名称	gene_num	gene_id
+其中需要使用wego.list,GO_GOlevel2.xls(这个文件第一列是第二列GO的子类GO号，第二类是大类算是二级分类的GO号，第三列是一级分类，第四列是二级分类)
+
+
+
+

@@ -1,0 +1,42 @@
+#该脚本用分割参考基因组的len.fa文件区间,用于后续callpeak得到的bed文件的取交集，是基因原件内容的一部分
+
+import os
+import sys
+gene_fa_len = '/public/database/annotation/Yarrowia_lipolytica/Yarrowia_lipolytica.fa.len'
+number      = 100000
+output      = '/nfs2/worktmp/chenzh_test/chip_seq_process/python_process/gene_Element/test'
+# gene_fa_len = sys.argv[1]
+# number      = sys.argv[2]
+# output      = sys.argv[3]
+
+with open(gene_fa_len,'r') as S1:
+	for line in S1:
+		list1= line.strip('\n').split('\t')
+		# print (list1)   ###可以看到第二列数值变成了字符串，需要将字符串转成数值
+		num  = int(int(list1[1])/100000)  
+		k    = 1     ###计数器
+		start= 0    ###start为第二列开始区域
+		end  = list1[1]
+		if (int(list1[1])%100000) != 0:
+			while k <= (num+1):
+				chr_name=list1[0]+"_"+str(k)
+				if k != (num+1):
+					print (list1[0],start,start+100000,chr_name,sep='\t')
+					k+=1
+					start+=100000
+				else:
+					print (list1[0],start,end,chr_name,sep='\t')
+					k+=1
+		else:
+			while k <= num:
+				chr_name=list1[0]+"_"+str(k)
+				if num !=1:
+					chr_name=list1[0]+"_"+str(k)    ##转字符串，字符串才能拼接
+					print (list1[0],start,start+100000,chr_name,sep='\t')
+					k+=1
+					start+=100000
+				else:
+					print (list1[0],start,end,chr_name,sep='\t')
+					k+=1
+
+

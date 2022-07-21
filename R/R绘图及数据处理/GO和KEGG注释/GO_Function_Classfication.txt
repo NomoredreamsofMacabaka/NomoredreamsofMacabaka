@@ -1,0 +1,155 @@
+###该脚本用于画GO功能分类图前的数据处理脚本
+#!usr/bin/pyhton3
+#1.读GO_level把第二列变为字典的键，第一列为值。判断第二列是否在list1中，若没有就push进list1.若有就在原有的键值对中添加值，字典1
+#2.将GO_level中第二列，第三列，第四列，按照第二列排序。以第二列为键，后面两列为值。字典2
+#3.读wego.list文件将GO号变成键，基因ID为值，每建一个键值对，判断GO号是否在list2中，若不在就push进去list2，若在就在原有的键值对中添加值，字典3
+#4.遍历list2中的元素是否存在于字典1中的键，若在，就将该元素对应的字典3中的值添加到字典2中该元素对应键的值中；若不在，判断是否存在于字典1中键对应
+#  的值，若在，就将该元素对应的字典3中的值添加到该元素对应到字典1对应的键在字典2中的键对应的值中。
+#5.对字典3的值取独一，计算gene_id的数目，输出。
+
+###       键       值
+###字典1：GO大类    GO子类
+###字典2：GO大类    功能
+###字典3：GO号      基因ID
+
+###list1：GO大类
+###list2：所有GO号(去重了的)
+
+import os
+import sys
+GO_level = '/data/project/hejie/my_script/datebase/GO/GO_GOlevel2.xls'
+Wego     = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/wego.list'
+output   = '/nfs2/worktmp/chenzh_test/chip_seq_process/test/wego_count.txt'
+###构建字典1,字典2,list1
+with open(GO_level,'r') as S1:
+	dic1 ={}
+	dic2 ={}
+	list1=[]
+	for line1 in S1:
+		line1=line1.strip('\n')
+		GO_Big_category = line1.split(sep="\t")[1]
+		GO_Subclass     = line1.split(sep="\t")[0]
+		Classfaction_one= line1.split(sep="\t")[2]
+		Classfaction_two= line1.split(sep="\t")[3]
+		if GO_Big_category not in list1:
+			list1.append(GO_Big_category)
+			dic2[GO_Big_category] = [Classfaction_one]
+			dic2[GO_Big_category].append(Classfaction_two)
+		else:
+			if GO_Big_category in dic1.keys():
+				dic1[GO_Big_category].append(GO_Subclass)
+			else:
+				dic1[GO_Big_category] = [GO_Subclass]
+#检验第一个字典输出
+# for key,value in dic1.items():
+# 	print ('\nkey:'+key)
+# 	print (value)
+
+
+#3.读wego.list文件将GO号变成键，基因ID为值，每建一个键值对，判断GO号是否在list2中，若不在就push进去list2，若在就在原有的键值对中添加值，字典3
+###构建字典3,list2(该列表中的GO号是去掉了重复的)
+with open(Wego,'r') as S2:
+	dic3 ={}
+	list2=[]
+	for line2 in S2:
+		line2 = line2.strip('\n')
+		k = 1
+		Length = len(line2.split(sep="\t"))
+		while k <= (Length-1):
+			s = line2.split(sep="\t")[k]
+			k=k+1
+			gene = line2.split(sep="\t")[0]
+			if s in list2:
+				dic3[s].append(gene)
+			else:
+				dic3[s] = [gene]
+				list2.append(s)	
+	#检验list2输出		
+	# with open(output,'w') as S3:
+	# 	for i in list2:
+	# 		print (i,file=S3)
+#检验第三个字典输出	
+# for key,value in dic3.items():
+# 	print ('\nkey:'+key)
+# 	print (value)
+
+
+#4.遍历list2中的元素是否存在于字典1中的键，若在，就将该元素对应的字典3中的值添加到字典2中该元素对应键的值中；若不在，判断是否存在于字典1中键对应
+#  的值，若在，就将该元素对应的字典3中的值添加到该元素对应到字典1对应的键在字典2中的键对应的值中。
+for i in list2:
+	for key1,value1 in dic1.items():
+		if i in key1:
+			for j in dic3[i]:
+				dic2[i].append(j)
+		elif i in value1:
+			for j in dic3[i]:
+				dic2[key1].append(j)
+
+# 检验第二个字典输出（目前的处理是键值对中多了gene）
+# for key,value in dic2.items():
+# 	print ('\nkey:'+key)
+# 	print (value)
+
+# 
+
+# ###输出,要对字典2的值进行去重，因为后面画图功能分类统计的是gene的数目，所以要对相同id的gene去重。
+with open(output,'w') as S3:
+	print ("GO_ID\tGO_term\tGO_description\tgene_num\tgene",file=S3)
+	for key2 in dic2.keys():
+		if len(dic2[key2]) > 2 :  ###删除没有注释到gene的GO大类
+			list4 = []  
+			list4.append(key2)
+			for i in dic2[key2]:   ###遍历key2所对应的值 
+				if i not in list4:
+					list4.append(i)		###记录需要打印的 GO大类 功能 geneid
+		
+
+			# 打印list4（去重了的GO大类 功能 geneid）
+			# for o in list4:
+			# 	print (o,end='\t',file=S3)
+			# print (file=S3)
+			k=0
+			list4.insert(3,(len(list4)-3))
+			while k <= (len(list4)-1):
+				if k==0 or k==1 or k==2 or k==3:
+					print (list4[k],end='\t',file=S3)
+				elif k!= (len(list4)-1):
+					print (list4[k],end=',',file=S3)
+				elif k == (len(list4)-1):
+					print (list4[k],end='\n',file=S3)
+				k=k+1
+
+
+
+
+
+
+###       键       值
+###字典1：GO大类    GO子类
+###字典2：GO大类    功能
+###字典3：GO号      基因ID
+
+###list1：GO大类
+###list2：所有GO号(去重了的)
+
+
+
+
+
+
+
+
+
+
+
+
+             
+
+
+
+
+
+
+
+
+

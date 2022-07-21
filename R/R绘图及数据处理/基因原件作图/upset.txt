@@ -1,0 +1,10 @@
+library(tidyverse)
+library(UpSetR)
+rm(list=ls())
+a <- read.table('C:/Users/Administrator/Desktop/tmp4')
+b <- tibble(a %>% dplyr::filter(V9=="Promoter"))
+c <- tibble(a %>% dplyr::filter(V9=="exon"))
+d <- tibble(a %>% dplyr::filter(V9=="intron"))
+e <- tibble(a %>% dplyr::filter(V9=="intergenic"))
+input <- list(exon=c$V4,Promoter=b$V4,intergenic=e$V4,intron=d$V4)   ##UpSetR包要求给的list中的各个值类似数据框才能读
+upset(fromList(input))

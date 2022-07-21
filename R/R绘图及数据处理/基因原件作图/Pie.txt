@@ -1,0 +1,22 @@
+rm(list=ls())
+#library(tidyverse)
+gene_Element <- read.table('C:/Users/Administrator/Desktop/tmp4')
+#gene_Element %>% select(V9)   #会报错,由于有多个包也存在select函数,Rstudio不知道调用的是哪个
+#gene_Element  %>% dplyr::select(V9)   #这个就指定了select函数的来源，可行
+gene_Element_name  <-  levels(factor(gene_Element$V9))
+factor <- factor(gene_Element$V9)   
+data_frame_1 <- data.frame(gene=character(),number=numeric(),percentage=numeric()) #创建空的数据框
+for (i in seq_along(gene_Element_name)){   ###seq_along返回长度数值
+  l = factor == gene_Element_name[i]   ###判断当factor == gene_Element_name[i]
+                                       ###判断结果是TURE和FALSE,factor这一列等于gene_Element_name[i]
+                                       ###就判断为TRUE,否者为FALSE
+  number <- length(factor[l])
+  percentage <- length(factor[l])/length(l)
+  data_frame_2 <- data.frame(gene=gene_Element_name[i],number=number,percentage=percentage)
+  data_frame_1 <- merge(data_frame_1,data_frame_2,all=TRUE)   ###all=TRUE表示所有的行列合并
+  }
+#print (data_frame_1)
+myColour <- c("#8dd3c7", "#ffffb3", "#fdb462", "#b3de69")
+names <- paste(round(100*data_frame_1$percentage,digits=2),"%")  ###round()四舍五入函数
+pie(data_frame_1$percentage,col=myColour,labels=names)
+legend("right",data_frame_1$gene,cex=0.85,fill=myColour,box.lwd = 0.5) #box.lwd默认值为1改小一下

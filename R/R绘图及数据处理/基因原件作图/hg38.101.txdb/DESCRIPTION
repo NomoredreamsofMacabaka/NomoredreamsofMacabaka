@@ -1,0 +1,16 @@
+Package: hg38.101.txdb
+Title: Annotation package for TxDb object(s)
+Description: Exposes an annotation databases generated from UCSC by exposing these as TxDb objects
+Version: 0.1
+Author: czh, <test@163.com> [cre]
+Maintainer: <test@163.com>
+Depends: GenomicFeatures (>= 1.21.30)
+Imports: AnnotationDbi
+License: Artistic-2.0
+organism: Homo sapiens
+species: Homo sapiens
+provider: UCSC
+provider_version: hg19 genome based on the knownGene table
+release_date: 2015-10-07 18:11:28 +0000 (Wed, 07 Oct 2015)
+resource_url: http://genome.ucsc.edu/
+biocViews: AnnotationData, Genetics, TxDb, Homo_sapiens

@@ -1,0 +1,58 @@
+#画图步骤:初始化启动layout(创建了sector)->创建track->画图形->常见track->画图形-…-clear.
+
+set.seed(456)
+n <- 500
+df <-  data.frame(factor = sample(letters[1:8],n,replace=TRUE), x = rnorm(n) , y = runif(n)) 
+###runif()是产生随机偏差函数
+
+circos.clear()   #清空circos变量
+library(circlize)
+circos.par("track.height"=0.1)   ###与par()函数类似,更改了默认变量track.height的值,0.1表示扇形弧长的十分之一
+circos.initialize(factors = df$factor , x = df$x)  ###创建sector(扇形区域，只有存在sector,才能部署轨道track)
+###circos.initialize函数中必须要设置的两个参数,factors和x或者xlim.
+###它会根据factors的level(如果不是factor则使用unique(factors))来确定创建几个sector.
+###x则会根据factor自动进行分组,然后根据每组的range自动设置每个sector的宽度(宽度代表的是x轴).
+
+
+
+
+circos.track(factor = df$factor, ylim=c(0,1),   ###由于circos.initialize()已经定义了X轴范围,这里只需要定义Y轴范围即可
+             panel.fun=function(x,y){
+               circos.text(x = get.cell.meta.data("xcenter"),
+                           y = get.cell.meta.data("ylim")[2]+uy(7,'mm'), ##uy转换坐标轴中Y轴的单位,同理有ux和uh参数
+                           labels = get.cell.meta.data('sector.index'))  ##labels就是abcdefgh，get了扇形的标签，也就是之前给的df$factor这一列的因子
+               circos.axis(labels.cex = 0.6)})   ###x轴坐标轴刻度显示在图中大小的调整
+
+###get.cell.meta.data()中有个name参数，有很多固定的字符串代表特殊含义
+###例如get.cell.meta.data("xcenter")表示：Center of x-axis. It equals to (xlim[2] + xlim[1])/2
+###get.cell.meta.data("ylim")[2]表示取y轴最大值为y
+
+
+col <- rep(c("skyblue", "red"), 4)   ###rep重复函数，col是一个带八个颜色的重复列表
+###轨道建好后，就可以在上面绘制低级图了
+circos.trackPoints(factors = df$factor, x = df$x , y = df$y, col = col ,pch = 16, cex = 0.5 )
+circos.text(x = 0, y=0.5 , labels = 'iiiii', sector.index = 'a' , track.index = 1)
+circos.text(x=0.3, y=0.5 , labels = 'bbbbb', sector.index = 'b' , track.index = 1)
+###pch表示点的类型 cex表示点的大小
+###track.index=1我觉得是表示在第一个轨道上操作
+
+#get.current.sector.index() 获取当前扇形的标签
+#get.current.track.index() 获取当前的轨道标签
+
+bgcol <- rep(c("#EFEFEF","#AAAAAA"),4)
+circos.trackHist(x=df$x , factors = df$factor , bin.size = 0.2 ,col=col , bg.col = bgcol ,bg.border = NA)
+circos.text(x=0,y=5,labels = 'test' , sector.index = 'f' ,track.index = 2)
+#bin.size表示每个柱状图的范围是多少,bg.col为背景颜色,bg.border调整边框
+#circos.text是根据track.index的值定义哪个轨道的,x轴跟y轴是根据轨道cell中定义的x轴长度很y轴的长度
+
+#可以看到,默认的话,track是一层一层从外往里进行添加.
+
+#在第三个轨道中画曲线图，取每个扇形sector中x和y各十个数值
+circos.track(factor=df$factor,x=df$x,y=df$y,
+             panel.fun=function(x,y){
+               tmp = sample(length(x),10)    ###len统计了x的总数,sample随机取了10个标签数值给tmp.
+               x1  = x[tmp]
+               y1  = y[tmp]      
+               od  =order(x1)    ###sample取的是乱序,所以这里需要排序
+               circos.lines(x=x1[od],y=y[od])
+             })
